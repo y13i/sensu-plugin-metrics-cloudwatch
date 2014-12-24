@@ -1,0 +1,25 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    aws-sdk-core (2.0.16)
+      builder (~> 3.0)
+      jmespath (~> 1.0)
+      multi_json (~> 1.0)
+      multi_xml (~> 0.5)
+    builder (3.2.2)
+    jmespath (1.0.2)
+      multi_json (~> 1.0)
+    json (1.8.1)
+    mixlib-cli (1.5.0)
+    multi_json (1.10.1)
+    multi_xml (0.5.5)
+    sensu-plugin (1.1.0)
+      json
+      mixlib-cli (>= 1.1.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  aws-sdk-core
+  sensu-plugin
