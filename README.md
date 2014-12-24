@@ -39,7 +39,7 @@ Usage: metrics-cloudwatch.rb (options)
 # Example
 
 ```
-% be ruby metrics-cloudwatch.rb --namespace AWS/ELB --dimensions LoadBalancerName:orenoelb --metrics Latency:Average,RequestCount:Sum,UnHealthyHostCount:Average,HealthyHostCount:Average,HTTPCode_Backend_2XX:Sum,HTTPCode_Backend_4XX:Sum,HTTPCode_Backend_5XX:Sum,HTTPCode_ELB_4XX:Sum,HTTPCode_ELB_5XX:Sum --scheme orenonode --newest-only
+% be ruby metrics-cloudwatch.rb --namespace AWS/ELB --dimensions LoadBalancerName:myloadbalancer --metrics Latency:Average,RequestCount:Sum,UnHealthyHostCount:Average,HealthyHostCount:Average,HTTPCode_Backend_2XX:Sum,HTTPCode_Backend_4XX:Sum,HTTPCode_Backend_5XX:Sum,HTTPCode_ELB_4XX:Sum,HTTPCode_ELB_5XX:Sum --scheme orenonode --newest-only
 orenonode.LoadBalancerName.myloadbalancer.Latency.Average 0.013829676310221353 1418969340
 orenonode.LoadBalancerName.myloadbalancer.RequestCount.Sum 15.0 1418969340
 orenonode.LoadBalancerName.myloadbalancer.UnHealthyHostCount.Sum 0.0 1418969340
