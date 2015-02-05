@@ -40,8 +40,7 @@ class MetricsCloudWatch < Sensu::Plugin::Metric::CLI::Graphite
   option :dimensions,
     description: "CloudWatch dimension names and values, seperated by commas.",
     short:       "-d DIMENSION_NAME_1:DIMENSION_VALUE_1,DIMENSION_NAME_2:DIMENSION_VALUE_2...",
-    long:        "--dimensions DIMENSION_NAME_1:DIMENSION_VALUE_1,DIMENSION_NAME_2:DIMENSION_VALUE_2...",
-    required:    true
+    long:        "--dimensions DIMENSION_NAME_1:DIMENSION_VALUE_1,DIMENSION_NAME_2:DIMENSION_VALUE_2..."
 
   option :interval,
     description: "Time interval between start and end for CloudWatch statistics.",
@@ -79,7 +78,7 @@ class MetricsCloudWatch < Sensu::Plugin::Metric::CLI::Graphite
     config[:metrics].split(",").each do |metric|
       metric_name, statistics = metric.split(":")
 
-      response = cloudwatch_client.get_metric_statistics(
+      params = {
         namespace:   config[:namespace],
         metric_name: metric_name,
         start_time:  start_time,
@@ -87,7 +86,9 @@ class MetricsCloudWatch < Sensu::Plugin::Metric::CLI::Graphite
         period:      config[:period],
         statistics:  [statistics],
         dimensions:  dimensions
-      )
+      }
+
+      response = cloudwatch_client.get_metric_statistics(params.reject {|k, v| v.nil?})
 
       unknown "CloudWatch GetMetricStatics unsuccessful." unless response.successful?
 
@@ -102,12 +103,12 @@ class MetricsCloudWatch < Sensu::Plugin::Metric::CLI::Graphite
 
         paths = [
           config[:scheme],
-          dimensions.map {|d| [d[:name], d[:value]]},
+          (dimensions.map {|d| [d[:name], d[:value]]} if dimensions),
           metric_name,
           statistics,
         ]
 
-        path         = paths.flatten.reject {|s| s.empty?}.join(".")
+        path         = paths.flatten.compact.reject(&:empty?).join(".")
         metric_value = datapoint[statistics.downcase.intern]
         timestamp    = datapoint[:timestamp].to_i
 
@@ -151,6 +152,8 @@ class MetricsCloudWatch < Sensu::Plugin::Metric::CLI::Graphite
   end
 
   def dimensions
+    return if config[:dimensions].nil?
+
     @dimensions ||= config[:dimensions].split(",").map do |dimension|
       kv = dimension.split(":")
 
