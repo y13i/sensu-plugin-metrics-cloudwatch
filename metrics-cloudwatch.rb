@@ -74,45 +74,44 @@ class MetricsCloudWatch < Sensu::Plugin::Metric::CLI::Graphite
     short:       "-N",
     long:        "--newest-only"
 
+  option :flatten_dimensions,
+    description: "Outputs each dimension as line.",
+    type:        :boolean,
+    short:       "-F",
+    long:        "--flatten-dimensions"
+
   def run
     config[:metrics].split(",").each do |metric|
       metric_name, statistics = metric.split(":")
 
-      params = {
-        namespace:   config[:namespace],
-        metric_name: metric_name,
-        start_time:  start_time,
-        end_time:    end_time,
-        period:      config[:period],
-        statistics:  [statistics],
-        dimensions:  dimensions
-      }
+      if config[:flatten_dimensions]
+        dimensions.each do |dimension|
+          params = {
+            namespace:   config[:namespace],
+            metric_name: metric_name,
+            start_time:  start_time,
+            end_time:    end_time,
+            period:      config[:period],
+            statistics:  [statistics],
+            dimensions:  [dimension],
+          }
 
-      response = cloudwatch_client.get_metric_statistics(params.reject {|k, v| v.nil?})
-
-      unknown "CloudWatch GetMetricStatics unsuccessful." unless response.successful?
-
-      datapoints = if config[:newest_only]
-        [response.datapoints.sort_by {|datapoint| datapoint[:timestamp]}.last]
+          datapoints = get_datapoints(params)
+          output_datapoints(datapoints, metric_name, statistics, [dimension[:name], dimension[:value]])
+        end
       else
-        response.datapoints
-      end
+        params = {
+          namespace:   config[:namespace],
+          metric_name: metric_name,
+          start_time:  start_time,
+          end_time:    end_time,
+          period:      config[:period],
+          statistics:  [statistics],
+          dimensions:  dimensions
+        }
 
-      datapoints.each do |datapoint|
-        next if datapoint.nil?
-
-        paths = [
-          config[:scheme],
-          (dimensions.map {|d| [d[:name], d[:value]]} if dimensions),
-          metric_name,
-          statistics,
-        ]
-
-        path         = paths.flatten.compact.reject(&:empty?).join(".")
-        metric_value = datapoint[statistics.downcase.intern]
-        timestamp    = datapoint[:timestamp].to_i
-
-        output [path, metric_value, timestamp].join(" ")
+        datapoints = get_datapoints(params)
+        output_datapoints(datapoints, metric_name, statistics, (dimensions.map {|d| [d[:name], d[:value]]} if dimensions))
       end
     end
 
@@ -170,5 +169,36 @@ class MetricsCloudWatch < Sensu::Plugin::Metric::CLI::Graphite
 
   def start_time
     @start_time ||= end_time - config[:interval]
+  end
+
+  def output_datapoints(datapoints, metric_name, statistics, dimension)
+    datapoints.each do |datapoint|
+      next if datapoint.nil?
+
+      paths = [
+        config[:scheme],
+        dimension,
+        metric_name,
+        statistics,
+      ]
+
+      path         = paths.flatten.compact.reject(&:empty?).join(".")
+      metric_value = datapoint[statistics.downcase.intern]
+      timestamp    = datapoint[:timestamp].to_i
+
+      output [path, metric_value, timestamp].join(" ")
+    end
+  end
+
+  def get_datapoints(params)
+    response = cloudwatch_client.get_metric_statistics(params.reject {|k, v| v.nil?})
+
+    unknown "CloudWatch GetMetricStatics unsuccessful." unless response.successful?
+
+    if config[:newest_only]
+      [response.datapoints.sort_by {|datapoint| datapoint[:timestamp]}.last]
+    else
+      response.datapoints
+    end
   end
 end
