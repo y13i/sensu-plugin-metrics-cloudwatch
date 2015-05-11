@@ -4,7 +4,7 @@ require "sensu-plugin/metric/cli"
 require "aws-sdk-core"
 
 class MetricsCloudWatch < Sensu::Plugin::Metric::CLI::Graphite
-  VERSION = "0.1.1"
+  VERSION = "0.2.0"
 
   option :profile,
     description: "Profile name of AWS shared credential file entry.",
