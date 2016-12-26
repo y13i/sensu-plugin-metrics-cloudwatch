@@ -1,4 +1,4 @@
-TODO: Write more instructions.
+**NEW: [y13i/metrin](https://github.com/y13i/metrin), Single binary, simple CloudWatch CLI can replace sensu-plugin-metrics-cloudwatch**
 
 # Installation
 
